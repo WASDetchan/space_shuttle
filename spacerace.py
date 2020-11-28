@@ -18,6 +18,7 @@ for star in range(random.randint(10, 20)):
     st[star] = [random.randint(0, width-32), random.randint(0, height-32)]
 
 
+# function to check key events
 def eventcheck():
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
