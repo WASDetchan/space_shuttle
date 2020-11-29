@@ -5,7 +5,7 @@ import random
 pygame.init()
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 surface = pygame.display.get_surface()
-pygame.display.set_caption('Space race')
+pygame.display.set_caption('Space race', '\\pics\\test.png')
 icon = pygame.image.load(os.getcwd() + '\\pics\\test.png')
 pygame.display.set_icon(icon)
 screen.fill([48, 5, 89])
@@ -13,6 +13,7 @@ pygame.display.flip()
 width = surface.get_width()
 height = surface.get_height()
 bullets = pygame.sprite.Group()
+meteors = pygame.sprite.Group()
 st = {}
 for star in range(random.randint(10, 20)):
     st[star] = [random.randint(0, width-32), random.randint(0, height-32)]
@@ -59,16 +60,42 @@ class BulletClass(pygame.sprite.Sprite):
         self.rect.left = x + 400
         self.rect.top = y + 90
 
-
     def move(self):
         self.rect = self.rect.move(20, 0)
-
 
     def IsOutOfScreen(self):
         if self.rect.left > width:
             return True
         else:
             return False
+
+
+class MeteorClass(pygame.sprite.Sprite):
+    def __init__(self, w, h):
+        self.hp = random.randint(1, 5)
+        self.speed = random.randint(3, 7)
+        self.size = random.choice(['s', 's', 's', 'm', 'm', 'm', 'm', 'm', 'l'])
+        pygame.sprite.Sprite.__init__(self)
+        if self.size == 's':
+            self.image = pygame.image.load(os.getcwd() + '\\pics\\meteors.png')
+            self.rect = self.image.get_rect()
+            self.rect.top = random.randint(0, h - 32)
+        if self.size == 'm':
+            self.image = pygame.image.load(os.getcwd() + '\\pics\\meteorm.png')
+            self.rect = self.image.get_rect()
+            self.rect.top = random.randint(0, h - 64)
+        if self.size == 'l':
+            self.image = pygame.image.load(os.getcwd() + '\\pics\\meteorl.png')
+            self.rect = self.image.get_rect()
+            self.rect.top = random.randint(0, h - 256)
+        self.rect.left = w + 1
+
+    def move(self):
+        self.rect.left -= self.speed
+
+    def IsDamaged(self, hp):
+        for bullet in bullets:
+            pygame.sprite.spritecollide(self, bullets, True)
 
 
 def maincycle(w, h, stars):
@@ -85,6 +112,7 @@ def maincycle(w, h, stars):
     left = False
     shoot = False
     while True:
+        screen.fill([48, 5, 89])
         if up:
             if y > 22:
                 y -= 22
@@ -97,7 +125,9 @@ def maincycle(w, h, stars):
         if left:
             if x > 30:
                 x -= 30
-        screen.fill([48, 5, 89])
+        if random.randint(0, 40) == 0:
+            meteor = MeteorClass(width, height)
+            meteors.add(meteor)
         if shoot:
             cooldown += 1
             if cooldown == 10:
@@ -107,6 +137,9 @@ def maincycle(w, h, stars):
         for i in stars:
             star = stars[i]
             screen.blit(startexture, [star[0], star[1]])
+        for meteor in meteors:
+            meteor.move()
+            screen.blit(meteor.image, [meteor.rect.left, meteor.rect.top])
         for bullet in bullets:
             bullet.move()
             if bullet.IsOutOfScreen():
