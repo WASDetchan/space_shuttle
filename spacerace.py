@@ -14,6 +14,7 @@ width = surface.get_width()
 height = surface.get_height()
 bullets = pygame.sprite.Group()
 meteors = pygame.sprite.Group()
+ships = pygame.sprite.Group()
 st = {}
 for star in range(random.randint(10, 20)):
     st[star] = [random.randint(0, width-32), random.randint(0, height-32)]
@@ -52,10 +53,62 @@ def eventcheck():
             return 'NoEvent'
 
 
-class BulletClass(pygame.sprite.Sprite):
-    def __init__(self, bullet_file, x, y):
+class ShipClass(pygame.sprite.Sprite):
+    def __init__(self, w, h):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(bullet_file)
+        ships.add(self)
+        self.texture1 = pygame.image.load(os.getcwd() + '\\pics\\shuttle6animation\\0.png')
+        self.texture2 = pygame.image.load(os.getcwd() + '\\pics\\shuttle6animation\\1.png')
+        self.texture3 = pygame.image.load(os.getcwd() + '\\pics\\shuttle6animation\\2.png')
+        self.texture4 = pygame.image.load(os.getcwd() + '\\pics\\shuttle6animation\\3.png')
+        self.texture5 = pygame.image.load(os.getcwd() + '\\pics\\shuttle6animation\\4.png')
+        self.texture6 = pygame.image.load(os.getcwd() + '\\pics\\shuttle6animation\\5.png')
+        self.texture7 = pygame.image.load(os.getcwd() + '\\pics\\shuttle6animation\\6.png')
+        self.texture8 = pygame.image.load(os.getcwd() + '\\pics\\shuttle6animation\\7.png')
+        self.image = self.texture1
+        self.rect = self.image.get_rect()
+        self.rect.left = w//7
+        self.rect.top = h//2 - 76
+        self.texturetimer = 0
+
+    def textureupdate(self):
+        if self.texturetimer == 10:
+            self.image = self.texture1
+        elif self.texturetimer == 20:
+            self.image = self.texture2
+        elif self.texturetimer == 30:
+            self.image = self.texture3
+        elif self.texturetimer == 40:
+            self.image = self.texture4
+        elif self.texturetimer == 50:
+            self.image = self.texture5
+        elif self.texturetimer == 60:
+            self.image = self.texture6
+        elif self.texturetimer == 70:
+            self.image = self.texture7
+        elif self.texturetimer == 80:
+            self.image = self.texture8
+            self.texturetimer = 1
+
+
+
+    def up(self):
+        self.rect.top -= 22
+
+    def down(self):
+        self.rect.top += 22
+
+    def right(self):
+        self.rect.left += 30
+
+    def left(self):
+        self.rect.left -= 30
+
+
+class BulletClass(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(os.getcwd() + '\\pics\\bullet.png')
         self.rect = self.image.get_rect()
         self.rect.left = x + 400
         self.rect.top = y + 90
@@ -72,39 +125,42 @@ class BulletClass(pygame.sprite.Sprite):
 
 class MeteorClass(pygame.sprite.Sprite):
     def __init__(self, w, h):
-        self.hp = random.randint(1, 5)
-        self.speed = random.randint(3, 7)
-        self.size = random.choice(['s', 's', 's', 'm', 'm', 'm', 'm', 'm', 'l'])
+        self.hp = random.randint(1, 2)
+        self.speed = random.uniform(0.5, 1.5)
+        self.size = random.choice(['s', 'm', 'm', 'm', 'm', 'm', 'l', 'l'])
         pygame.sprite.Sprite.__init__(self)
         if self.size == 's':
             self.image = pygame.image.load(os.getcwd() + '\\pics\\meteors.png')
             self.rect = self.image.get_rect()
-            self.rect.top = random.randint(0, h - 32)
+            self.rect.top = random.randint(130, h - 256)
         if self.size == 'm':
             self.image = pygame.image.load(os.getcwd() + '\\pics\\meteorm.png')
             self.rect = self.image.get_rect()
-            self.rect.top = random.randint(0, h - 64)
+            self.rect.top = random.randint(130, h - 256)
         if self.size == 'l':
             self.image = pygame.image.load(os.getcwd() + '\\pics\\meteorl.png')
             self.rect = self.image.get_rect()
-            self.rect.top = random.randint(0, h - 256)
+            self.rect.top = random.randint(130, h - 256)
         self.rect.left = w + 1
+        self.floatx = self.rect.left
 
     def move(self):
-        self.rect.left -= self.speed
+        self.floatx -= self.speed
+        self.rect.left = int(self.floatx)
+        if self.rect.left < -256:
+            pygame.sprite.Sprite.kill(self)
 
     def IsDamaged(self, hp):
-        for bullet in bullets:
-            pygame.sprite.spritecollide(self, bullets, True)
+        if pygame.sprite.spritecollide(self, bullets, True):
+            pygame.sprite.Sprite.kill(self)
+        if pygame.sprite.spritecollide(self, ships, True):
+            a = 1
 
 
 def maincycle(w, h, stars):
-    y = h // 2 - 76
-    x = width//7
+    ship = ShipClass(w, h)
     clock = pygame.time.Clock()
     startexture = pygame.image.load(os.getcwd() + '\\pics\\star.png')
-    shuttletexture = pygame.image.load(os.getcwd() + '\\pics\\shuttle5.png')
-    bullettexture = os.getcwd() + '\\pics\\bullet.png'
     cooldown = 0
     up = False
     down = False
@@ -114,25 +170,25 @@ def maincycle(w, h, stars):
     while True:
         screen.fill([48, 5, 89])
         if up:
-            if y > 22:
-                y -= 22
+            if ship.rect.top > 22:
+                ship.up()
         if down:
-            if y < h - 152 - 22:
-                y += 22
+            if ship.rect.top < h - 22 - 152:
+                ship.down()
         if right:
-            if x < w - 400 - 30:
-                x += 30
+            if ship.rect.left < w - 400 - 30:
+                ship.right()
         if left:
-            if x > 30:
-                x -= 30
-        if random.randint(0, 40) == 0:
+            if ship.rect.left > 30:
+                ship.left()
+        if random.randint(0, 20) == 0:
             meteor = MeteorClass(width, height)
             meteors.add(meteor)
         if shoot:
-            cooldown += 1
+            cooldown += 10
             if cooldown == 10:
                 cooldown = 0
-                bullet = BulletClass(bullettexture, x, y)
+                bullet = BulletClass(ship.rect.left, ship.rect.top)
                 bullets.add(bullet)
         for i in stars:
             star = stars[i]
@@ -140,13 +196,16 @@ def maincycle(w, h, stars):
         for meteor in meteors:
             meteor.move()
             screen.blit(meteor.image, [meteor.rect.left, meteor.rect.top])
+            meteor.IsDamaged(1)
         for bullet in bullets:
             bullet.move()
             if bullet.IsOutOfScreen():
                 bullets.remove(bullet)
                 pygame.sprite.Sprite.kill(bullet)
             screen.blit(bullet.image, bullet.rect)
-        screen.blit(shuttletexture, [x, y])
+        ship.texturetimer += 1
+        ship.textureupdate()
+        screen.blit(ship.image, [ship.rect.left, ship.rect.top])
         pygame.display.flip()
         clock.tick(60)
         event = eventcheck()
